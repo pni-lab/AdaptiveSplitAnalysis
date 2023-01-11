@@ -1,0 +1,18 @@
+Table modifications:
+
+Order:
+	HalfSplit
+	90-10
+	Pareto
+	Adaptive
+        
+Header new names:
+	training split size
+	validation sample scores (specify the kind of score)
+	test p-values
+        
+Add:        
+	Standard deviation for test, p-vals and adaptivesplit sample sizes
+	Total sample size as header of the table
+	
+Also: target name for each dataset!

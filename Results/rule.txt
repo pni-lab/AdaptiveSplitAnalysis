@@ -1,0 +1,33 @@
+# Evaluate the rule
+
+Stop when:
+
+    n_{actual} > training_{min} 
+    
+    AND 
+
+        n_{actual} >= n_{total} – validation_{min}
+        
+        OR
+
+        power_{actual} < power_{target} AND
+        slope(power_{actual}) < 0
+        
+
+        OR
+
+        predicted(score_{total}) – score_{actual} < score_{relevant}
+        
+        
+        Order:
+        
+        HalfSplit
+        90-10
+        Pareto
+        Adaptive
+        
+        training split size
+        validation sample scores (specify the kind of score)
+        test p-values
+        
+        Standard deviation for test, p-vals and adaptivesplit sample sizes
