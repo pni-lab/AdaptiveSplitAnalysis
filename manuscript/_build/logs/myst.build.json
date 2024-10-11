@@ -1,0 +1,41 @@
+{
+  "input": {
+    "files": [
+      "01-paper.md"
+    ],
+    "opts": {
+      "execute": false,
+      "pdf": false,
+      "tex": false,
+      "typst": false,
+      "docx": true,
+      "md": false,
+      "xml": false,
+      "meca": false,
+      "site": false,
+      "html": false,
+      "all": false,
+      "watch": false,
+      "force": false,
+      "checkLinks": false,
+      "strict": false,
+      "ci": false,
+      "maxSizeWebp": 1572864
+    },
+    "performSiteBuild": false
+  },
+  "exports": [
+    {
+      "format": "docx",
+      "output": "/Users/giuseppe/Documents/Projects/adaptivesplit/manuscript/exports/adaptivesplit_manuscript.docx",
+      "articles": [
+        {
+          "file": "/Users/giuseppe/Documents/Projects/adaptivesplit/manuscript/01-paper.md",
+          "level": 0
+        }
+      ],
+      "$file": "/Users/giuseppe/Documents/Projects/adaptivesplit/manuscript/01-paper.md",
+      "$project": "/Users/giuseppe/Documents/Projects/adaptivesplit/manuscript"
+    }
+  ]
+}

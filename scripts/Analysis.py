@@ -1,6 +1,6 @@
 from adaptivesplit.sklearn_interface.split import AdaptiveSplit
 from sklearn.metrics import mean_absolute_error, accuracy_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from adaptivesplit.base.resampling import PermTest
 from sklearn.base import is_classifier
 import pandas as pd
@@ -96,6 +96,26 @@ def split_scores(X, y, estimator, sample_sizes, method, stratify=None, n_permuta
             pc = None
             fig = None
 
+        elif method == '75-25split':
+            X_train, X_test, y_train, y_test, stop = custom_split(X_samples, y_samples,
+                                                                  test_size=0.25, shuffle=False,
+                                                                  random_state=random_state)
+
+            # define empty variables for split;
+            lc = None
+            pc = None
+            fig = None
+
+        elif method == '70-30split': 
+            X_train, X_test, y_train, y_test, stop = custom_split(X_samples, y_samples,
+                                                                  test_size=0.3, shuffle=False,
+                                                                  random_state=random_state)
+
+            # define empty variables for split;
+            lc = None
+            pc = None
+            fig = None
+
         elif method == 'halfsplit':
             X_train, X_test, y_train, y_test, stop = custom_split(X_samples, y_samples,
                                                                   test_size=0.5, shuffle=False,
@@ -143,11 +163,13 @@ def split_scores(X, y, estimator, sample_sizes, method, stratify=None, n_permuta
         test_score = scorer(y_test, y_pred)
 
         if scorer == mean_absolute_error:  # get neg_mean_absolute_error;
-            scores_on_train.append(-estim.score(X_train, y_train))
+            discovery_scores = cross_val_score(estimator, X_train, y_train, scoring="neg_mean_absolute_error", n_jobs=n_jobs)
+            scores_on_train.append(discovery_scores.mean())
             scores_on_test.append(-test_score)
             compare_operator = operator.le
         else:
-            scores_on_train.append(estim.score(X_train, y_train))
+            discovery_scores = cross_val_score(estimator, X_train, y_train, scoring="accuracy", n_jobs=n_jobs)
+            scores_on_train.append(discovery_scores.mean())
             scores_on_test.append(test_score)
             compare_operator = operator.ge
 
@@ -156,4 +178,4 @@ def split_scores(X, y, estimator, sample_sizes, method, stratify=None, n_permuta
         res = perm.test(y_test, y_pred, n_jobs=n_jobs, random_seed=random_state)
         p_vals.append(res[1])
 
-    return scores_on_train, scores_on_test, p_vals, stops, learning_curves, power_curves, plots
+    return scores_on_train, scores_on_test, p_vals, stops, learning_curves, power_curves, plots, discovery_scores

@@ -15,12 +15,12 @@ import matplotlib.pyplot as plt
 from matplotlib import use
 use('Agg')
 
-data = pd.read_csv('../data_in/bcw/data.csv')
-data = data.drop(['Unnamed: 32','id'], axis=1)
+data = pd.read_csv('./data_in/bcw/data.csv')
+data = data.drop(['Unnamed: 32','id'], axis = 1)
 
 target = 'diagnosis'
 
-data[target].replace({"B": 0, "M": 1}, inplace=True)
+data[target].replace({"B":0, "M":1}, inplace=True)
 
 # Define training and test sets;
 X = data.loc[:, data.columns != target]
@@ -29,7 +29,7 @@ y = data[target]
 from sklearn.linear_model import RidgeClassifierCV
 
 model = RidgeClassifierCV(scoring='accuracy',
-                          alphas=(0.1, 1, 10))  # default alpha values;
+                          alphas=(0.1, 1, 10)) # default alpha values;
 
 ##
 # Run Analyses;
@@ -37,8 +37,8 @@ model = RidgeClassifierCV(scoring='accuracy',
 
 from adaptivesplit import config
 
-results_path = '../tests/BCW/'
-plot_path = '../tests/BCW/plots/'
+results_path = './tests/BCW/'
+plot_path = './tests/BCW/plots/'
 
 results = pd.DataFrame()
 sample_sizes = np.logspace(np.log10(50), np.log10(150), 5).astype(int)
@@ -56,27 +56,38 @@ for iteration in range(0, n_permutation):
     y_perm = y.iloc[perm_index_set]
 
     for index in range(len(sample_sizes)):
-        train_pareto, test_pareto, p_vals_pareto, stops_pareto, lc_pareto, pc_pareto, plots_pareto = split_scores(
+        train_pareto, test_pareto, p_vals_pareto, stops_pareto, lc_pareto, pc_pareto, plots_pareto, dscores_pareto = split_scores(
                                                                                             X_perm, y_perm, model,
                                                                                             sample_sizes=[sample_sizes[index]],
                                                                                             method='pareto', random_state=seed)
 
-        train_halfsplit, test_halfsplit, p_vals_halfsplit, stops_halfsplit, lc_halfsplit, pc_halfsplit, plots_halfsplit = split_scores(
+        train_halfsplit, test_halfsplit, p_vals_halfsplit, stops_halfsplit, lc_halfsplit, pc_halfsplit, plots_halfsplit, dscores_halfsplit = split_scores(
                                                                                             X_perm, y_perm, model,
                                                                                             sample_sizes=[sample_sizes[index]],
                                                                                             method='halfsplit', random_state=seed)
 
-        train_9010, test_9010, p_vals_9010, stops_9010, lc_9010, pc_9010, plots_9010 = split_scores(
+        train_9010, test_9010, p_vals_9010, stops_9010, lc_9010, pc_9010, plots_9010, dscores_9010 = split_scores(
                                                                                             X_perm, y_perm, model,
                                                                                             sample_sizes=[sample_sizes[index]],
                                                                                             method='90-10split', random_state=seed)
 
-        train_ads, test_ads, p_vals_ads, stops_ads, lc_ads, pc_ads, plots_ads = split_scores(X_perm, y_perm, model,
+        train_75_25, test_75_25, p_vals_75_25, stops_75_25, lc_75_25, pc_75_25, plots_75_25, dscores_75_25  = split_scores(
+                                                                                            X_perm, y_perm, model,
+                                                                                            sample_sizes=[sample_sizes[index]],
+                                                                                            method='75-25split', random_state=seed)
+
+        train_70_30, test_70_30, p_vals_70_30, stops_70_30, lc_70_30, pc_70_30, plots_70_30, dscores_70_30 = split_scores(
+                                                                                            X_perm, y_perm, model,
+                                                                                            sample_sizes=[sample_sizes[index]],
+                                                                                            method='70-30split', random_state=seed)
+
+        train_ads, test_ads, p_vals_ads, stops_ads, lc_ads, pc_ads, plots_ads, dscores_ads = split_scores(X_perm, y_perm, model,
                                                                                              sample_sizes=[
                                                                                                  sample_sizes[index]],
                                                                                              method='adaptivesplit',
+                                                                                             power_bootstrap_samples=1,
                                                                                              plotting=True,
-                                                                                             random_state=seed, stratify=None)
+                                                                                             random_state=seed)
 
         # Put stopping rules info inside the Dataframe:
         results.loc[counter, 'min_training_sample_size'] = config._min_training_sample_size_
@@ -96,26 +107,42 @@ for iteration in range(0, n_permutation):
 
         # Put truncation info inside the DataFrame;
         results.loc[counter, 'truncate_sample_size'] = sample_sizes[index]
-        results.loc[counter, 'pareto_sample_size'] = stops_pareto
-        results.loc[counter, 'halfsplit_sample_size'] = stops_halfsplit
-        results.loc[counter, 'split90-10_sample_size'] = stops_9010
-        results.loc[counter, 'adaptivesplit_sample_size'] = sample_sizes[index] + (stops_ads - sample_sizes[index])
+        results.loc[counter, 'pareto_sample_size'] = stops_pareto[0]
+        results.loc[counter, 'halfsplit_sample_size'] = stops_halfsplit[0]
+        results.loc[counter, 'split90-10_sample_size'] = stops_9010[0]
+        results.loc[counter, 'split75-25_sample_size'] = stops_75_25[0]
+        results.loc[counter, 'split70-30_sample_size'] = stops_70_30[0]
+        results.loc[counter, 'adaptivesplit_sample_size'] = sample_sizes[index] + (stops_ads - sample_sizes[index])[0]
 
-        # Put split_scores results inside the DataFrame:
-        results.loc[counter, 'pareto_train_scores'] = train_pareto
-        results.loc[counter, 'halfsplit_train_scores'] = train_halfsplit
-        results.loc[counter, 'split90-10_train_scores'] = train_9010
-        results.loc[counter, 'adaptivesplit_train_scores'] = train_ads
+        # Save all discovery scores (training cross-validation);
+        results.loc[counter, 'pareto_discovery_scores'] = dscores_pareto.tobytes()
+        results.loc[counter, 'halfsplit_discovery_scores'] = dscores_halfsplit.tobytes()
+        results.loc[counter, 'split90-10_discovery_scores'] = dscores_9010.tobytes()
+        results.loc[counter, 'split75-25_discovery_scores'] = dscores_75_25.tobytes()
+        results.loc[counter, 'split70-30_discovery_scores'] = dscores_70_30.tobytes()
+        results.loc[counter, 'adaptivesplit_discovery_scores'] = dscores_ads.tobytes()
 
-        results.loc[counter, 'pareto_test_scores'] = test_pareto
-        results.loc[counter, 'halfsplit_test_scores'] = test_halfsplit
-        results.loc[counter, 'split90-10_test_scores'] = test_9010
-        results.loc[counter, 'adaptivesplit_test_scores'] = test_ads
+        # Put split_scores results inside the DataFrame;
+        results.loc[counter, 'pareto_train_scores'] = train_pareto[0]
+        results.loc[counter, 'halfsplit_train_scores'] = train_halfsplit[0]
+        results.loc[counter, 'split90-10_train_scores'] = train_9010[0]
+        results.loc[counter, 'split75-25_train_scores'] = train_75_25[0]
+        results.loc[counter, 'split70-30_train_scores'] = train_70_30[0]
+        results.loc[counter, 'adaptivesplit_train_scores'] = train_ads[0]
 
-        results.loc[counter, 'pareto_p_values'] = p_vals_pareto
-        results.loc[counter, 'halfsplit_p_values'] = p_vals_halfsplit
-        results.loc[counter, 'split90-10_p_values'] = p_vals_9010
-        results.loc[counter, 'adaptivesplit_p_values'] = p_vals_ads
+        results.loc[counter, 'pareto_test_scores'] = test_pareto[0]
+        results.loc[counter, 'halfsplit_test_scores'] = test_halfsplit[0]
+        results.loc[counter, 'split90-10_test_scores'] = test_9010[0]
+        results.loc[counter, 'split75-25_test_scores'] = test_75_25[0]
+        results.loc[counter, 'split70-30_test_scores'] = test_70_30[0]
+        results.loc[counter, 'adaptivesplit_test_scores'] = test_ads[0]
+
+        results.loc[counter, 'pareto_p_values'] = p_vals_pareto[0]
+        results.loc[counter, 'halfsplit_p_values'] = p_vals_halfsplit[0]
+        results.loc[counter, 'split90-10_p_values'] = p_vals_9010[0]
+        results.loc[counter, 'split75-25_p_values'] = p_vals_75_25[0]
+        results.loc[counter, 'split70-30_p_values'] = p_vals_70_30[0]
+        results.loc[counter, 'adaptivesplit_p_values'] = p_vals_ads[0]
 
         # Put permutation info inside the Dataframe;
         results.loc[counter, 'n_permutation'] = iteration

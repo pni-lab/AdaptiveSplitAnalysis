@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 VERSION = '0.0.1'
-DESCRIPTION = 'AdaptiveSplit'
-LONG_DESCRIPTION = 'External validation of machine learning models with adaptive sample splitting'
+DESCRIPTION = 'AdaptiveSplitAnalysis'
+LONG_DESCRIPTION = 'Repo storing the analyses and manuscript for the adaptivesplit approach'
 
 # Setting up
 setup(
